@@ -18,11 +18,12 @@ export const AlbumList = ({ albums, setSelectedAlbum }: AlbumListProps) => {
       style={{ ...styles.albumList, backgroundColor: colors.background2 }}
       contentContainerStyle={styles.contentContainer}
       numColumns={2}
+      nestedScrollEnabled
       data={albums}
       renderItem={({ item }) => (
         <AlbumItem item={item} setSelectedAlbum={setSelectedAlbum} />
       )}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id || `title-${item.title ?? 'untitled'}`}
     />
   );
 };

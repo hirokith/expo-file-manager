@@ -17,15 +17,17 @@ export const AssetItem = ({
   isSelecting,
   toggleSelect,
 }: AssetProps) => {
+  const handleToggleSelect = () => {
+    toggleSelect(asset);
+  };
+
   return (
     <TouchableOpacity
       key={asset.id}
       style={styles.assetContainer}
       activeOpacity={0.8}
-      onLongPress={() => toggleSelect(asset)}
-      onPress={() => {
-        if (isSelecting) toggleSelect(asset);
-      }}
+      onLongPress={handleToggleSelect}
+      onPress={handleToggleSelect}
     >
       <Image style={styles.assetImage} source={{ uri: asset.uri }} />
       {isSelecting && (

@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-simple-dialogs/dist/Dialog.js b/node_modules/react-native-simple-dialogs/dist/Dialog.js
+index 7cf62ff..1ad5fd7 100644
+--- a/node_modules/react-native-simple-dialogs/dist/Dialog.js
++++ b/node_modules/react-native-simple-dialogs/dist/Dialog.js
+@@ -103,7 +103,7 @@ const Dialog = (props) => {
+                     },
+                     overlayStyle,
+                 ] },
+-                react_1.default.createElement(react_native_1.SafeAreaView, { style: { flex: 1 } },
++                react_1.default.createElement(react_native_1.View, { style: { flex: 1 } },
+                     renderOutsideTouchable(),
+                     react_1.default.createElement(react_native_1.View, { style: [
+                             {

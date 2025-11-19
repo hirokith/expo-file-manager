@@ -24,7 +24,7 @@ const Web: React.FC = () => {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const browserRef = useRef<WebView>();
+  const browserRef = useRef<WebView>(null);
 
   useEffect(() => {
     const backAction = () => {
@@ -77,23 +77,60 @@ const Web: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.searchBar}>
-        <TextInput
-          style={[
-            styles.searchBarInput,
-            { borderColor: colors.primary, color: colors.text },
-          ]}
-          selection={!isFocused ? { start: 0, end: 0 } : null}
-          blurOnSubmit
-          keyboardType="url"
-          onChangeText={(text) => setUrl(text)}
-          onSubmitEditing={() => {
-            Keyboard.dismiss;
-            setTarget(upgradeURL(url));
-          }}
-          value={url}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-        />
+        <View style={styles.searchBarRow}>
+          <TouchableOpacity onPress={goBack} style={styles.navButton}>
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={canGoBack ? colors.primary : colors.text}
+              style={{ opacity: canGoBack ? 1 : 0.3 }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={goForward} style={styles.navButton}>
+            <Ionicons
+              name="arrow-forward"
+              size={24}
+              color={canGoForward ? colors.primary : colors.text}
+              style={{ opacity: canGoForward ? 1 : 0.3 }}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={reloadPage} style={styles.navButton}>
+            <Ionicons name="refresh" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TextInput
+            style={[
+              styles.searchBarInput,
+              { borderColor: colors.primary, color: colors.text },
+            ]}
+            selection={!isFocused ? { start: 0, end: 0 } : null}
+            blurOnSubmit
+            keyboardType="url"
+            onChangeText={(text) => setUrl(text)}
+            onSubmitEditing={() => {
+              Keyboard.dismiss;
+              setTarget(upgradeURL(url));
+            }}
+            value={url}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              right: 10,
+              borderRadius: 5,
+              backgroundColor: colors.background,
+            }}
+          >
+            <TouchableOpacity onPress={() => setTarget(url)}>
+              <Ionicons
+                name={'arrow-forward-circle-outline'}
+                size={24}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
         <View
           style={[
             styles.progressBar,
@@ -104,22 +141,6 @@ const Web: React.FC = () => {
             },
           ]}
         ></View>
-        <View
-          style={{
-            position: 'absolute',
-            right: 10,
-            borderRadius: 5,
-            backgroundColor: colors.background,
-          }}
-        >
-          <TouchableOpacity onPress={() => setTarget(url)}>
-            <Ionicons
-              name={'arrow-forward-circle-outline'}
-              size={35}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-        </View>
       </View>
       <WebView
         allowsLinkPreview
@@ -144,25 +165,7 @@ const Web: React.FC = () => {
           setLoadingProgress(nativeEvent.progress);
         }}
       />
-      <View style={styles.bottomBar}>
-        <TouchableOpacity onPress={goBack}>
-          <Ionicons
-            name="ios-arrow-back"
-            size={32}
-            color={canGoBack ? colors.primary : colors.background}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={reloadPage}>
-          <Ionicons name="ios-refresh" size={32} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={goForward}>
-          <Ionicons
-            name="ios-arrow-forward"
-            size={32}
-            color={canGoForward ? colors.primary : colors.background}
-          />
-        </TouchableOpacity>
-      </View>
+
     </View>
   );
 };
@@ -178,24 +181,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  searchBarRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '95%',
+  },
+  navButton: {
+    marginRight: 10,
+  },
   searchBarInput: {
+    flex: 1,
     height: 40,
     borderWidth: 0.5,
     marginTop: 5,
-    marginHorizontal: 10,
     padding: 5,
     paddingRight: 45,
     borderRadius: 5,
-    width: '95%',
     overflow: 'hidden',
-  },
-  bottomBar: {
-    width: '100%',
-    height: 50,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
   },
   progressBar: {
     height: 2,

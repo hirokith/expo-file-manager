@@ -6,11 +6,11 @@ import { ExtendedAsset } from '../../../types';
 
 type AssetListProps = {
   assets: ExtendedAsset[];
-  albumId: string;
-  hasNextPage: boolean;
-  endCursor: string;
+  albumId: string | null;
+  hasNextPage: boolean | null;
+  endCursor: string | null;
   isSelecting: boolean;
-  getAlbumAssets: (albumId: string, after?: string | undefined) => void;
+  getAlbumAssets: (albumId?: string | null, after?: string | undefined) => void;
   toggleSelect: (asset: ExtendedAsset) => void;
 };
 
@@ -28,6 +28,7 @@ export const AssetList = ({
       style={styles.albumList}
       contentContainerStyle={styles.contentContainer}
       numColumns={3}
+      nestedScrollEnabled
       data={assets}
       renderItem={({ item }) => (
         <AssetItem
@@ -36,9 +37,9 @@ export const AssetList = ({
           isSelecting={isSelecting}
         />
       )}
-      keyExtractor={(item) => item.albumId}
+      keyExtractor={(item) => item.id}
       onEndReached={() => {
-        if (hasNextPage) getAlbumAssets(albumId, endCursor);
+        if (hasNextPage) getAlbumAssets(albumId, endCursor || undefined);
       }}
       onEndReachedThreshold={0.9}
     />

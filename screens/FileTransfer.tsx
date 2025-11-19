@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import Constants from 'expo-constants';
 
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, Camera } from 'expo-camera';
+import type { BarcodeScanningResult } from 'expo-camera';
 import { io, Socket } from 'socket.io-client';
 
 import { useAppSelector } from '../hooks/reduxHooks';
@@ -27,7 +28,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 const FileTransfer: React.FC = () => {
   const { colors } = useAppSelector((state) => state.theme.theme);
-  const [hasPermission, setHasPermission] = useState(null);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(true);
   const [socket, setSocket] = useState<Socket>(io());
   const [socketURL, setSocketURL] = useState('');
@@ -51,7 +52,7 @@ const FileTransfer: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
   }, []);
@@ -62,7 +63,7 @@ const FileTransfer: React.FC = () => {
     });
   }, [socket]);
 
-  const handleScan = ({ _, data }) => {
+  const handleScan = ({ data }: BarcodeScanningResult) => {
     setScanned(true);
     setSocketURL(data);
   };
@@ -157,8 +158,8 @@ const FileTransfer: React.FC = () => {
   return (
     <View style={styles.container}>
       {!scanned && hasPermission && (
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : handleScan}
+        <CameraView
+          onBarcodeScanned={scanned ? undefined : handleScan}
           style={StyleSheet.absoluteFillObject}
         />
       )}

@@ -25,9 +25,18 @@ export const AlbumItem = ({ item: album, setSelectedAlbum }: AlbumProps) => {
     <TouchableOpacity
       style={styles.albumContainer}
       activeOpacity={0.8}
-      onPress={() => setSelectedAlbum({ id: album.id, title: album.title })}
+      onPress={() => setSelectedAlbum({ id: album.id || null, title: album.title || 'Album' })}
     >
-      <Image style={styles.albumCover} source={{ uri: album.coverImage }} />
+      {album.coverImage ? (
+        <Image style={styles.albumCover} source={{ uri: album.coverImage }} />
+      ) : (
+        <View
+          style={[
+            styles.albumCover,
+            { backgroundColor: colors.background2 },
+          ]}
+        />
+      )}
       <View style={styles.albumDetailsContainer}>
         <Text
           style={{ ...styles.albumTitle, color: colors.primary }}

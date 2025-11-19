@@ -30,20 +30,23 @@ export const MainNavigator: React.FC = () => {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any;
           if (route.name === 'Home') {
-            iconName = focused ? 'ios-home' : 'ios-home';
+            iconName = focused ? 'home' : 'home';
           } else if (route.name === 'Settings') {
-            iconName = focused ? 'ios-list' : 'ios-list';
+            iconName = focused ? 'list' : 'list';
           } else if (route.name === 'Downloads') {
-            iconName = 'ios-cloud-download';
+            iconName = 'cloud-download';
           } else if (route.name === 'Web') {
-            iconName = 'ios-globe';
+            iconName = 'globe-outline';
           } else if (route.name === 'FileTransfer') {
-            iconName = 'ios-documents-outline';
+            iconName = 'documents-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveBackgroundColor: colors.background,
         tabBarInactiveBackgroundColor: colors.background,
+        tabBarLabelStyle: {
+          fontSize: 14,
+        }
       })}
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />

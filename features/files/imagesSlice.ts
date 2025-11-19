@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { FileInfo } from 'expo-file-system';
+import { FileInfo } from 'expo-file-system/legacy';
 import { RootState } from '../../store';
 
 interface imagesSliceState {

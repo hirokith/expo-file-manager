@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 
 import Modal from 'react-native-modal';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { Feather } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
@@ -144,7 +144,7 @@ export const FileTransferDialog = ({
             }}
           >
             <Ionicons
-              name="md-checkmark-done-sharp"
+              name="checkmark-done-sharp"
               size={32}
               color={colors.primary}
             />

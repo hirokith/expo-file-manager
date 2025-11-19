@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -52,6 +53,8 @@ const ActionSheet = ({
   itemIcons,
   onItemPressed,
 }: IActionSheetProps) => {
+  const insets = useSafeAreaInsets();
+
   const ActionListItem = ({ item, index }: IActionListItemProps) => {
     const { colors } = useAppSelector((state) => state.theme.theme);
     return (
@@ -80,7 +83,7 @@ const ActionSheet = ({
             styles.itemText,
             itemTextStyle,
             cancelButtonIndex &&
-              cancelButtonIndex === index && { color: '#ff453a' },
+            cancelButtonIndex === index && { color: '#ff453a' },
           ]}
         >
           {item}
@@ -105,7 +108,7 @@ const ActionSheet = ({
       >
         <View style={styles.modalOverlay} />
       </TouchableWithoutFeedback>
-      <View style={[styles.modalBody, modalStyle]}>
+      <View style={[styles.modalBody, modalStyle, { paddingBottom: insets.bottom }]}>
         {title && (
           <View style={styles.titleContainer}>
             <Text

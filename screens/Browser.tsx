@@ -8,14 +8,13 @@ import {
   Alert,
   BackHandler,
   TextInput,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 import Dialog from 'react-native-dialog';
 
-import {
-  Dialog as GalleryDialog,
-  ProgressDialog,
-} from 'react-native-simple-dialogs';
+import { ProgressDialog } from 'react-native-simple-dialogs';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -33,20 +32,18 @@ import { FileTransferDialog } from '../components/Browser/FileTransferDialog';
 import axios, { AxiosError } from 'axios';
 import moment from 'moment';
 import Constants from 'expo-constants';
-import * as FileSystem from 'expo-file-system';
-import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as mime from 'react-native-mime-types';
 
 import { StackScreenProps } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
-import { ImageInfo } from 'expo-image-picker/build/ImagePicker.types';
 import { ExtendedAsset, fileItem } from '../types';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { setImages } from '../features/files/imagesSlice';
 import { setSnack, snackActionPayload } from '../features/files/snackbarSlice';
-import { HEIGHT, imageFormats, reExt, SIZE } from '../utils/Constants';
+import { HEIGHT, imageFormats, SIZE } from '../utils/Constants';
 
 type BrowserParamList = {
   Browser: { prevDir: string; folderName: string };
@@ -78,6 +75,9 @@ const Browser = ({ route }: IBrowserProps) => {
   const [newFileActionSheet, setNewFileActionSheet] = useState(false);
   const [moveOrCopy, setMoveOrCopy] = useState('');
   const { multiSelect, allSelected } = useSelectionChange(files);
+  const [imagePickerMode, setImagePickerMode] = useState<'single' | 'multi'>(
+    'multi'
+  );
 
   useEffect(() => {
     getFiles();
@@ -253,47 +253,6 @@ const Browser = ({ route }: IBrowserProps) => {
         });
       });
   }
-
-  const pickImage = async () => {
-    (async () => {
-      if (Platform.OS !== 'web') {
-        const { status } =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          handleSetSnack({
-            message:
-              'Sorry, we need camera roll permissions to make this work!',
-          });
-        }
-        MediaLibrary.requestPermissionsAsync();
-      }
-    })();
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      const { uri, type } = result as ImageInfo;
-      const filename: string = uri.replace(/^.*[\\\/]/, '');
-      const ext: string | null = reExt.exec(filename)![1];
-      const fileNamePrefix = type === 'image' ? 'IMG_' : 'VID_';
-      FileSystem.moveAsync({
-        from: uri,
-        to:
-          currentDir +
-          '/' +
-          fileNamePrefix +
-          moment().format('DDMMYHmmss') +
-          '.' +
-          ext,
-      })
-        .then((_) => getFiles())
-        .catch((err) => console.log(err));
-    }
-  };
 
   async function handleCopy(
     from: string,
@@ -512,8 +471,10 @@ const Browser = ({ route }: IBrowserProps) => {
         onClose={setNewFileActionSheet}
         onItemPressed={(buttonIndex) => {
           if (buttonIndex === 0) {
-            pickImage();
+            setImagePickerMode('single');
+            setMultiImageVisible(true);
           } else if (buttonIndex === 1) {
+            setImagePickerMode('multi');
             setMultiImageVisible(true);
           } else if (buttonIndex === 2) {
             pickDocument();
@@ -572,21 +533,32 @@ const Browser = ({ route }: IBrowserProps) => {
         />
         <Dialog.Button label="Rename" onPress={() => onRename()} />
       </Dialog.Container>
-      <GalleryDialog
-        dialogStyle={{
-          backgroundColor: colors.background2,
-        }}
-        animationType="slide"
-        contentStyle={styles.contentStyle}
-        overlayStyle={styles.overlayStyle}
+      <Modal
         visible={multiImageVisible}
-        onTouchOutside={() => setMultiImageVisible(false)}
+        animationType="slide"
+        transparent
+        hardwareAccelerated
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setMultiImageVisible(false)}
       >
-        <Pickimages
-          onMultiSelectSubmit={onMultiSelectSubmit}
-          onClose={() => setMultiImageVisible(false)}
-        />
-      </GalleryDialog>
+        <View style={styles.pickerModalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setMultiImageVisible(false)}>
+            <View style={styles.pickerModalBackdrop} />
+          </TouchableWithoutFeedback>
+          <View
+            style={[
+              styles.pickerModalContent,
+              { backgroundColor: colors.background2 },
+            ]}
+          >
+            <Pickimages
+              selectionMode={imagePickerMode}
+              onMultiSelectSubmit={onMultiSelectSubmit}
+              onClose={() => setMultiImageVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
 
       <ProgressDialog
         visible={importProgressVisible}
@@ -597,7 +569,7 @@ const Browser = ({ route }: IBrowserProps) => {
       <View style={styles.topButtons}>
         <View style={styles.topLeft}>
           <TouchableOpacity onPress={() => setNewFileActionSheet(true)}>
-            <AntDesign name="addfile" size={30} color={colors.primary} />
+            <AntDesign name="file-add" size={30} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setFolderDialogVisible(true)}>
             <Feather name="folder-plus" size={30} color={colors.primary} />
@@ -697,16 +669,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     alignItems: 'center',
   },
-  contentStyle: {
+  pickerModalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  pickerModalContent: {
     width: SIZE,
     height: HEIGHT * 0.8,
-    padding: 0,
-    margin: 0,
-  },
-  overlayStyle: {
-    width: SIZE,
-    padding: 0,
-    margin: 0,
+    borderRadius: 12,
+    overflow: 'hidden',
+    zIndex: 1,
   },
 });
 

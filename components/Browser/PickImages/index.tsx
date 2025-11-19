@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
   View,
@@ -12,26 +12,30 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import useMultiImageSelection from '../../../hooks/useMultiImageSelection';
 import { customAlbum, ExtendedAsset } from '../../../types';
 import { AlbumList } from './AlbumList';
 import { AssetList } from './AssetList';
-import { SIZE } from '../../../utils/Constants';
 import { useAppSelector } from '../../../hooks/reduxHooks';
 
 type PickImagesProps = {
   onMultiSelectSubmit: (data: ExtendedAsset[]) => void;
   onClose: () => void;
+  selectionMode?: 'single' | 'multi';
 };
 
+const ALL_PHOTOS_ID = '__all__';
+
 export type selectedAlbumType = {
-  id: string;
+  id: string | null;
   title: string;
 };
 
 export default function PickImages({
   onMultiSelectSubmit,
   onClose,
+  selectionMode = 'multi',
 }: PickImagesProps) {
   const { colors } = useAppSelector((state) => state.theme.theme);
   const [isMediaGranted, setIsMediaGranted] = useState<boolean | null>(null);
@@ -44,69 +48,131 @@ export default function PickImages({
   const [hasNextPage, setHasNextPage] = useState<boolean | null>(null);
   const [endCursor, setEndCursor] = useState<string | null>(null);
   const [selectedAssets, setSelectedAssets] = useState<ExtendedAsset[]>([]);
+  const isSingleSelection = selectionMode === 'single';
   const isSelecting = useMultiImageSelection(assets);
+  const showSelectionActions = !isSingleSelection && isSelecting;
+
+  const resetAssetState = useCallback(() => {
+    setAssets([]);
+    setSelectedAssets([]);
+    setHasNextPage(null);
+    setEndCursor(null);
+  }, []);
+
+  const resolveAssetUri = useCallback(async (asset: ExtendedAsset) => {
+    if (asset.uri?.startsWith('ph://')) {
+      try {
+        const info = await MediaLibrary.getAssetInfoAsync(asset, {
+          shouldDownloadFromNetwork: false,
+        });
+        if (info.localUri) {
+          return { ...asset, uri: info.localUri };
+        }
+      } catch (error) {
+        console.warn('Failed to resolve asset URI', asset.id, error);
+      }
+    }
+    return asset;
+  }, []);
 
   async function getAlbums() {
-    const albums = await MediaLibrary.getAlbumsAsync();
-    const albumsPromiseArray = albums.map(
-      async (album) =>
-        await MediaLibrary.getAssetsAsync({
-          album: album,
+    const [userAlbums, allAssetsPreview] = await Promise.all([
+      MediaLibrary.getAlbumsAsync({ includeSmartAlbums: true }),
+      MediaLibrary.getAssetsAsync({
+        first: 1,
+        sortBy: MediaLibrary.SortBy.creationTime,
+      }),
+    ]);
+
+    const albumAssetPages = await Promise.all(
+      userAlbums.map((album) =>
+        MediaLibrary.getAssetsAsync({
+          album,
           first: 10,
           sortBy: MediaLibrary.SortBy.default,
         })
+      )
     );
-    Promise.all(albumsPromiseArray).then((values) => {
-      const nonEmptyAlbums = values
-        .filter((item) => item.totalCount > 0)
-        .map((item) => {
-          const album = albums.find((a) => a.id === item.assets[0].albumId);
+
+    const nonEmptyAlbums = await Promise.all(
+      albumAssetPages
+        .filter((item) => item.totalCount > 0 && item.assets.length > 0)
+        .map(async (item) => {
+          const album = userAlbums.find((a) => a.id === item.assets[0].albumId);
+          const coverAsset = await resolveAssetUri(item.assets[0]);
           const albumObject: customAlbum = {
             id: album?.id,
             title: album?.title,
             assetCount: album?.assetCount,
             type: album?.type,
-            coverImage: item.assets[0].uri,
+            coverImage: coverAsset.uri,
           };
           return albumObject;
-        });
-      setAlbums(nonEmptyAlbums);
-      setAlbumsFetched(true);
-    });
+        })
+    );
+
+    const allPhotosCoverAsset = allAssetsPreview.assets[0]
+      ? await resolveAssetUri(allAssetsPreview.assets[0])
+      : undefined;
+
+    const allPhotosAlbum: customAlbum = {
+      id: ALL_PHOTOS_ID,
+      title: 'All Photos',
+      assetCount: allAssetsPreview.totalCount,
+      type: 'smart',
+      coverImage: allPhotosCoverAsset?.uri,
+    };
+
+    setAlbums([allPhotosAlbum, ...nonEmptyAlbums]);
+    setAlbumsFetched(true);
+
+    if (isSingleSelection && !selectedAlbum) {
+      setSelectedAlbum({ id: ALL_PHOTOS_ID, title: 'All Photos' });
+    }
   }
 
-  async function getAlbumAssets(albumId: string, after?: string | undefined) {
-    const options = {
-      album: albumId,
-      first: 25,
+  async function getAlbumAssets(albumId?: string | null, after?: string) {
+    const options: MediaLibrary.AssetsOptions = {
+      first: 50,
       sortBy: MediaLibrary.SortBy.creationTime,
     };
-    if (after) options['after'] = after;
+    if (albumId && albumId !== ALL_PHOTOS_ID) {
+      options.album = albumId;
+    }
+    if (after) options.after = after;
     const albumAssets = await MediaLibrary.getAssetsAsync(options);
-    setAssets((prev) => [...prev, ...albumAssets.assets]);
+    const resolvedAssets = await Promise.all(
+      albumAssets.assets.map((asset) => resolveAssetUri(asset))
+    );
+    setAssets((prev) => [...prev, ...resolvedAssets]);
     setHasNextPage(albumAssets.hasNextPage);
     setEndCursor(albumAssets.endCursor);
   }
 
   const toggleSelect = (item: ExtendedAsset) => {
+    if (isSingleSelection) {
+      onClose();
+      onMultiSelectSubmit([item]);
+      return;
+    }
     const isSelected =
       selectedAssets.findIndex((asset) => asset.id === item.id) !== -1;
     if (!isSelected) setSelectedAssets((prev) => [...prev, item]);
     else
       setSelectedAssets((prev) => [
-        ...prev.filter((asset) => asset.id != item.id),
+        ...prev.filter((asset) => asset.id !== item.id),
       ]);
-    setAssets(
-      assets.map((i) => {
-        if (item.id === i.id) {
-          i.selected = !i.selected;
-        }
-        return i;
-      })
+    setAssets((prevAssets) =>
+      prevAssets.map((asset) =>
+        asset.id === item.id
+          ? { ...asset, selected: !asset.selected }
+          : asset
+      )
     );
   };
 
   const handleImport = () => {
+    if (selectedAssets.length === 0) return;
     onClose();
     onMultiSelectSubmit(selectedAssets);
     return selectedAssets;
@@ -161,49 +227,68 @@ export default function PickImages({
   }, []);
 
   useEffect(() => {
-    if (selectedAlbum) getAlbumAssets(selectedAlbum.id);
-  }, [selectedAlbum]);
+    if (selectedAlbum) {
+      resetAssetState();
+      getAlbumAssets(selectedAlbum.id);
+    }
+  }, [selectedAlbum, resetAssetState]);
+
+  const handleAlbumSelection = (album: selectedAlbumType | null) => {
+    if (!album) {
+      resetAssetState();
+      setSelectedAlbum(null);
+      return;
+    }
+    if (album.id === selectedAlbum?.id) return;
+    setSelectedAlbum(album);
+  };
 
   if (!isMediaGranted && isMediaGranted !== null)
     return (
-      <View
+      <SafeAreaView
         style={{
           ...styles.noAccessContainer,
           backgroundColor: colors.background,
         }}
+        edges={['top', 'bottom']}
       >
         <Text style={{ ...styles.noAccessText, color: colors.primary }}>
           {'Media Access Denied'}
         </Text>
         <Button title="Go to Settings" onPress={() => Linking.openSettings()} />
-      </View>
+      </SafeAreaView>
     );
 
   if (!albumsFetched)
     return (
-      <View
+      <SafeAreaView
+        edges={['top', 'bottom']}
         style={{ ...styles.container, backgroundColor: colors.background2 }}
       >
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      </SafeAreaView>
     );
 
   if (albumsFetched && albums.length === 0)
     return (
-      <View
+      <SafeAreaView
+        edges={['top', 'bottom']}
         style={{ ...styles.container, backgroundColor: colors.background2 }}
       >
         <Text style={{ color: colors.text, fontFamily: 'Poppins_600SemiBold' }}>
           No Albums Found
         </Text>
-      </View>
+      </SafeAreaView>
     );
 
   return (
-    <View style={{ ...styles.container, backgroundColor: colors.background2 }}>
+    <SafeAreaView
+      edges={['top', 'bottom']}
+      style={{ ...styles.container, backgroundColor: colors.background2 }}
+    >
       <View style={styles.header}>
         <View style={styles.confirmButton}>
-          {isSelecting && (
+          {showSelectionActions && (
             <TouchableOpacity
               style={styles.handleImport}
               onPress={handleImport}
@@ -230,13 +315,7 @@ export default function PickImages({
         </Text>
         <View style={styles.backButtonContainer}>
           {selectedAlbum && (
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedAlbum(null);
-                setAssets([]);
-                setSelectedAssets([]);
-              }}
-            >
+            <TouchableOpacity onPress={() => handleAlbumSelection(null)}>
               <Feather name="chevron-left" size={32} color={colors.primary} />
             </TouchableOpacity>
           )}
@@ -244,7 +323,7 @@ export default function PickImages({
       </View>
       <View style={styles.listContainer}>
         {albumsFetched && !selectedAlbum && (
-          <AlbumList albums={albums} setSelectedAlbum={setSelectedAlbum} />
+          <AlbumList albums={albums} setSelectedAlbum={handleAlbumSelection} />
         )}
         {selectedAlbum && (
           <AssetList
@@ -253,12 +332,12 @@ export default function PickImages({
             getAlbumAssets={getAlbumAssets}
             hasNextPage={hasNextPage}
             endCursor={endCursor}
-            toggleSelect={toggleSelect}
-            isSelecting={isSelecting}
+                toggleSelect={toggleSelect}
+            isSelecting={showSelectionActions}
           />
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -267,12 +346,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 10,
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: SIZE,
+    width: '100%',
+    paddingHorizontal: 6,
     marginBottom: 15,
   },
   backButtonContainer: {
@@ -284,10 +366,11 @@ const styles = StyleSheet.create({
     left: 10,
   },
   listContainer: {
-    width: SIZE,
-    height: '90%',
+    width: '100%',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 10,
   },
   noAccessContainer: {
     flex: 1,
