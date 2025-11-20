@@ -202,7 +202,7 @@ export default function PickImages({
               },
               {
                 text: 'Nevermind',
-                onPress: () => {},
+                onPress: () => { },
                 style: 'cancel',
               },
             ];
@@ -284,43 +284,41 @@ export default function PickImages({
   return (
     <SafeAreaView
       edges={['top', 'bottom']}
-      style={{ ...styles.container, backgroundColor: colors.background2 }}
+      style={{ ...styles.container, backgroundColor: colors.background }}
     >
-      <View style={styles.header}>
-        <View style={styles.confirmButton}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={styles.headerLeft}>
+          {selectedAlbum ? (
+            <TouchableOpacity onPress={() => handleAlbumSelection(null)}>
+              <Feather name="chevron-left" size={28} color={colors.primary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={onClose}>
+              <Feather name="x" size={24} color={colors.text} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.headerTitle}>
+          <Text style={{ ...styles.title, color: colors.text }}>
+            {selectedAlbum?.title || 'Albums'}
+          </Text>
+        </View>
+
+        <View style={styles.headerRight}>
           {showSelectionActions && (
             <TouchableOpacity
               style={styles.handleImport}
               onPress={handleImport}
             >
-              <MaterialCommunityIcons
-                name="file-import-outline"
-                size={30}
-                color={colors.primary}
-              />
-              <Text
-                style={{
-                  fontFamily: 'Poppins_500Medium',
-                  fontSize: 18,
-                  color: colors.primary,
-                }}
-              >
-                {selectedAssets.length}
+              <Text style={{ ...styles.importText, color: colors.primary }}>
+                Import ({selectedAssets.length})
               </Text>
             </TouchableOpacity>
           )}
         </View>
-        <Text style={{ ...styles.title, color: colors.primary }}>
-          {selectedAlbum?.title || 'Albums'}
-        </Text>
-        <View style={styles.backButtonContainer}>
-          {selectedAlbum && (
-            <TouchableOpacity onPress={() => handleAlbumSelection(null)}>
-              <Feather name="chevron-left" size={32} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
       </View>
+
       <View style={styles.listContainer}>
         {albumsFetched && !selectedAlbum && (
           <AlbumList albums={albums} setSelectedAlbum={handleAlbumSelection} />
@@ -332,7 +330,7 @@ export default function PickImages({
             getAlbumAssets={getAlbumAssets}
             hasNextPage={hasNextPage}
             endCursor={endCursor}
-                toggleSelect={toggleSelect}
+            toggleSelect={toggleSelect}
             isSelecting={showSelectionActions}
           />
         )}
@@ -350,27 +348,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   header: {
-    display: 'flex',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 6,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  backButtonContainer: {
-    position: 'absolute',
-    right: 10,
+  headerLeft: {
+    minWidth: 60,
+    alignItems: 'flex-start',
   },
-  confirmButton: {
-    position: 'absolute',
-    left: 10,
+  headerRight: {
+    minWidth: 60,
+    alignItems: 'flex-end',
+  },
+  headerTitle: {
+    flex: 1,
+    alignItems: 'center',
   },
   listContainer: {
     width: '100%',
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 10,
   },
   noAccessContainer: {
     flex: 1,
@@ -379,19 +380,21 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   title: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 20,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 17,
+    textAlign: 'center',
   },
   noAccessText: {
     marginBottom: 20,
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: 'Inter_500Medium',
   },
   handleImport: {
-    display: 'flex',
     flexDirection: 'row',
-    width: 60,
-    height: 30,
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  importText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    marginLeft: 4,
   },
 });

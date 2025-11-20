@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -212,9 +213,9 @@ const Browser = ({ route }: IBrowserProps) => {
             let tempfiles: fileItem[] = results.map((file) => {
               const name = file.uri.endsWith('/')
                 ? file.uri
-                    .slice(0, file.uri.length - 1)
-                    .split('/')
-                    .pop()
+                  .slice(0, file.uri.length - 1)
+                  .split('/')
+                  .pop()
                 : file.uri.split('/').pop();
               return Object({
                 ...file,
@@ -238,7 +239,7 @@ const Browser = ({ route }: IBrowserProps) => {
           });
         }
       })
-      .catch((_) => {});
+      .catch((_) => { });
   };
 
   async function createDirectory(name: string) {
@@ -348,7 +349,7 @@ const Browser = ({ route }: IBrowserProps) => {
             to: destination + '/' + file.name,
           });
       });
-      allProgress(transferPromises, (p) => {}).then((_) => {
+      allProgress(transferPromises, (p) => { }).then((_) => {
         setDestinationDialogVisible(false);
         setMoveDir('');
         setMoveOrCopy('');
@@ -362,8 +363,7 @@ const Browser = ({ route }: IBrowserProps) => {
     if (confLen > 0) {
       Alert.alert(
         'Conflicting Files',
-        `The destination folder has ${confLen} ${
-          confLen === 1 ? 'file' : 'files'
+        `The destination folder has ${confLen} ${confLen === 1 ? 'file' : 'files'
         } with the same ${confLen === 1 ? 'name' : 'names'}.`,
         [
           {
@@ -452,7 +452,7 @@ const Browser = ({ route }: IBrowserProps) => {
     <View style={{ ...styles.container, backgroundColor: colors.background }}>
       <ActionSheet
         title={'Add a new file'}
-        numberOfLinesTitle={undefined}
+        numberOfLinesTitle={1}
         visible={newFileActionSheet}
         actionItems={[
           'Camera Roll',
@@ -462,9 +462,9 @@ const Browser = ({ route }: IBrowserProps) => {
           'Cancel',
         ]}
         itemIcons={[
-          'camera',
+          'camera-alt',
           'image',
-          'drive-file-move-outline',
+          'drive-file-move',
           'file-download',
           'close',
         ]}
@@ -485,7 +485,7 @@ const Browser = ({ route }: IBrowserProps) => {
         cancelButtonIndex={4}
         modalStyle={{ backgroundColor: colors.background2 }}
         itemTextStyle={{ color: colors.text }}
-        titleStyle={{ color: colors.secondary }}
+        titleStyle={{ color: colors.textSecondary }}
       />
       <FileTransferDialog
         isVisible={destinationDialogVisible}
@@ -508,7 +508,7 @@ const Browser = ({ route }: IBrowserProps) => {
         setDownloadDialog={setDownloadDialogVisible}
       />
       <Dialog.Container visible={renameDialogVisible}>
-        <Dialog.Title style={{ color: 'black' }}>Rename file</Dialog.Title>
+        <Dialog.Title style={{ color: colors.text }}>Rename file</Dialog.Title>
         <Dialog.Input
           textInputRef={renameInputRef}
           value={decodeURI(newFileName)}
@@ -523,7 +523,7 @@ const Browser = ({ route }: IBrowserProps) => {
               ? { start: 0, end: decodeURI(newFileName).split('.')[0].length }
               : undefined
           }
-          style={{ color: 'black' }}
+          style={{ color: colors.text }}
         ></Dialog.Input>
         <Dialog.Button
           label="Cancel"
@@ -566,62 +566,62 @@ const Browser = ({ route }: IBrowserProps) => {
         message="Please, wait..."
       />
 
-      <View style={styles.topButtons}>
-        <View style={styles.topLeft}>
-          <TouchableOpacity onPress={() => setNewFileActionSheet(true)}>
-            <AntDesign name="file-add" size={30} color={colors.primary} />
+      <View style={styles.headerContainer}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          {currentDir === docDir ? 'Files' : currentDir.split('/').pop()}
+        </Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: colors.background2 }]}
+            onPress={() => setNewFileActionSheet(true)}
+          >
+            <AntDesign name="plus" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setFolderDialogVisible(true)}>
-            <Feather name="folder-plus" size={30} color={colors.primary} />
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: colors.background2, marginLeft: 8 }]}
+            onPress={() => setFolderDialogVisible(true)}
+          >
+            <Feather name="folder-plus" size={24} color={colors.primary} />
           </TouchableOpacity>
+          {multiSelect && (
+            <>
+              <TouchableOpacity
+                style={[styles.iconButton, { backgroundColor: colors.background2, marginLeft: 8 }]}
+                onPress={() => {
+                  setDestinationDialogVisible(true);
+                  setMoveOrCopy('Move');
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="file-move-outline"
+                  size={24}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconButton, { backgroundColor: colors.background2, marginLeft: 8 }]}
+                onPress={toggleSelectAll}
+              >
+                <Feather
+                  name={allSelected ? 'check-square' : 'square'}
+                  size={24}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-        {multiSelect && (
-          <View style={styles.topRight}>
-            <TouchableOpacity
-              onPress={() => {
-                setDestinationDialogVisible(true);
-                setMoveOrCopy('Move');
-              }}
-            >
-              <MaterialCommunityIcons
-                name="file-move-outline"
-                size={30}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={toggleSelectAll}>
-              <Feather
-                style={{ marginLeft: 10 }}
-                name={allSelected ? 'check-square' : 'square'}
-                size={24}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
-      <View style={{ ...styles.fileList, borderTopColor: colors.primary }}>
+
+      <View style={styles.fileList}>
         <FlatList
           data={files}
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
           keyExtractor={_keyExtractor}
+          contentContainerStyle={{ paddingBottom: 100 }}
         />
       </View>
-      {multiSelect && (
-        <View
-          style={{ ...styles.bottomMenu, backgroundColor: colors.background }}
-        >
-          <TouchableOpacity>
-            <MaterialCommunityIcons
-              name="export-variant"
-              size={28}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
@@ -634,40 +634,30 @@ const styles = StyleSheet.create({
     width: SIZE,
     paddingTop: Constants.statusBarHeight,
   },
-  topButtons: {
-    display: 'flex',
+  headerContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 15,
-    marginHorizontal: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  topLeft: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '25%',
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter_700Bold',
   },
-  topRight: {
-    width: '75%',
-    display: 'flex',
+  headerButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   fileList: {
     flex: 1,
-    borderTopWidth: 0.5,
-    marginTop: 15,
-    marginHorizontal: 5,
-  },
-  bottomMenu: {
-    height: 45,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   pickerModalOverlay: {
     flex: 1,
@@ -681,7 +671,7 @@ const styles = StyleSheet.create({
   pickerModalContent: {
     width: SIZE,
     height: HEIGHT * 0.8,
-    borderRadius: 12,
+    borderRadius: 24,
     overflow: 'hidden',
     zIndex: 1,
   },

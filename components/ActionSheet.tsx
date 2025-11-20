@@ -54,18 +54,20 @@ const ActionSheet = ({
   onItemPressed,
 }: IActionSheetProps) => {
   const insets = useSafeAreaInsets();
+  const { theme } = useAppSelector((state) => state.theme);
 
   const ActionListItem = ({ item, index }: IActionListItemProps) => {
-    const { colors } = useAppSelector((state) => state.theme.theme);
+    const isDestructive = index === cancelButtonIndex;
     return (
       <TouchableOpacity
         style={[styles.itemStyle, itemStyle]}
+        activeOpacity={0.7}
         onPress={() => {
           onClose(false);
           if (Platform.OS === 'ios') {
             setTimeout(() => {
               onItemPressed(index);
-            }, 1000);
+            }, 300);
           } else {
             onItemPressed(index);
           }
@@ -75,15 +77,15 @@ const ActionSheet = ({
           <MaterialIcons
             name={itemIcons[index]}
             size={24}
-            color={index === cancelButtonIndex ? '#ff453a' : colors.secondary}
+            color={isDestructive ? theme.colors.error : theme.colors.textSecondary}
           />
         </View>
         <Text
           style={[
             styles.itemText,
+            { color: theme.colors.text },
             itemTextStyle,
-            cancelButtonIndex &&
-            cancelButtonIndex === index && { color: '#ff453a' },
+            isDestructive && { color: theme.colors.error },
           ]}
         >
           {item}
@@ -108,11 +110,17 @@ const ActionSheet = ({
       >
         <View style={styles.modalOverlay} />
       </TouchableWithoutFeedback>
-      <View style={[styles.modalBody, modalStyle, { paddingBottom: insets.bottom }]}>
+      <View
+        style={[
+          styles.modalBody,
+          { backgroundColor: theme.colors.background3, paddingBottom: insets.bottom },
+          modalStyle,
+        ]}
+      >
         {title && (
-          <View style={styles.titleContainer}>
+          <View style={[styles.titleContainer, { borderBottomColor: theme.colors.border }]}>
             <Text
-              style={[styles.titleText, titleStyle]}
+              style={[styles.titleText, { color: theme.colors.textSecondary }, titleStyle]}
               ellipsizeMode="middle"
               numberOfLines={numberOfLinesTitle}
             >
@@ -141,40 +149,44 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalBody: {
     width: SIZE,
     position: 'absolute',
     bottom: 0,
-    borderRadius: 10,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: 'white', // Will be overridden by inline style
+    overflow: 'hidden',
   },
   titleContainer: {
     width: SIZE,
-    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   titleText: {
-    fontFamily: 'Poppins_500Medium',
-    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
     textAlign: 'center',
+    color: '#64748b',
   },
   itemStyle: {
     width: SIZE,
-    height: 45,
-    display: 'flex',
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: 10,
+    paddingHorizontal: 24,
   },
   itemText: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 15,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 16,
   },
   iconContainer: {
-    marginRight: 10,
+    marginRight: 16,
   },
 });

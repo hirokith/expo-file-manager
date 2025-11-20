@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { SIZE } from '../../../utils/Constants';
 import { ExtendedAsset } from '../../../types';
 
+import { useAppSelector } from '../../../hooks/reduxHooks';
+
 const ITEM_SIZE = SIZE / 3;
 
 type AssetProps = {
@@ -17,6 +19,7 @@ export const AssetItem = ({
   isSelecting,
   toggleSelect,
 }: AssetProps) => {
+  const { colors } = useAppSelector((state) => state.theme.theme);
   const handleToggleSelect = () => {
     toggleSelect(asset);
   };
@@ -32,9 +35,17 @@ export const AssetItem = ({
       <Image style={styles.assetImage} source={{ uri: asset.uri }} />
       {isSelecting && (
         <View style={styles.checkCircleContainer}>
-          <View style={styles.checkCircleBG}></View>
+          <View
+            style={[
+              styles.checkCircleBG,
+              {
+                backgroundColor: asset.selected ? colors.primary : 'rgba(255,255,255,0.5)',
+                borderColor: colors.background,
+              },
+            ]}
+          ></View>
           {asset.selected && (
-            <Ionicons name="checkmark-done" size={20} color="white" />
+            <Ionicons name="checkmark-done" size={20} color={colors.background} />
           )}
         </View>
       )}
@@ -73,9 +84,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'gray',
     borderWidth: 1.5,
-    borderColor: 'white',
     opacity: 0.9,
   },
 });

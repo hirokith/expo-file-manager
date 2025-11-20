@@ -157,13 +157,12 @@ export default function FileItem({
             setTimeout(() => {
               Alert.alert(
                 'Confirm Delete',
-                `Are you sure you want to delete ${
-                  multiSelect ? 'selected files' : 'this file'
+                `Are you sure you want to delete ${multiSelect ? 'selected files' : 'this file'
                 }?`,
                 [
                   {
                     text: 'Cancel',
-                    onPress: () => {},
+                    onPress: () => { },
                     style: 'cancel',
                   },
                   {
@@ -199,12 +198,12 @@ export default function FileItem({
         cancelButtonIndex={5}
         modalStyle={{ backgroundColor: colors.background2 }}
         itemTextStyle={{ color: colors.text }}
-        titleStyle={{ color: colors.secondary }}
+        titleStyle={{ color: colors.textSecondary }}
       />
-      <View style={styles.itemContainer}>
+      <View style={[styles.itemContainer, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.itemLeft}
-          activeOpacity={0.5}
+          style={styles.itemContent}
+          activeOpacity={0.7}
           onPress={onPressHandler}
           onLongPress={() => {
             if (!multiSelect) {
@@ -218,39 +217,35 @@ export default function FileItem({
           <View style={styles.itemDetails}>
             <Text
               numberOfLines={1}
-              style={{ ...styles.fileName, color: colors.primary }}
+              style={[styles.fileName, { color: colors.text }]}
             >
               {decodeURI(item.name)}
             </Text>
-            <Text style={{ ...styles.fileDetailText, color: colors.secondary }}>
-              {humanFileSize(item.size)}
-            </Text>
-            <Text style={{ ...styles.fileDetailText, color: colors.secondary }}>
-              {moment(item.modificationTime * 1000).fromNow()}
-            </Text>
+            <View style={styles.fileMeta}>
+              <Text style={[styles.fileDetailText, { color: colors.textSecondary }]}>
+                {humanFileSize(item.size)}
+              </Text>
+              <Text style={[styles.fileDetailText, { color: colors.textSecondary, marginLeft: 8 }]}>
+                {moment(item.modificationTime * 1000).fromNow()}
+              </Text>
+            </View>
           </View>
         </TouchableOpacity>
-        {/**Item Action Button */}
-        <View
-          style={{
-            ...styles.itemActionButton,
-            backgroundColor: colors.background,
-          }}
+
+        <TouchableOpacity
+          style={styles.itemActionButton}
+          onPress={() => setItemActionsOpen(true)}
         >
-          <TouchableOpacity onPress={() => setItemActionsOpen(true)}>
-            <View style={styles.fileMenu}>
-              {!item.selected ? (
-                <Feather
-                  name="more-horizontal"
-                  size={24}
-                  color={colors.primary}
-                />
-              ) : (
-                <Feather name="check-square" size={24} color={colors.primary} />
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
+          {!item.selected ? (
+            <Feather
+              name="more-vertical"
+              size={20}
+              color={colors.textSecondary}
+            />
+          ) : (
+            <Feather name="check-square" size={24} color={colors.primary} />
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -258,66 +253,54 @@ export default function FileItem({
 
 const styles = StyleSheet.create({
   container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 75,
+    width: '100%',
   },
   itemContainer: {
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    height: '100%',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  itemLeft: {
-    height: '100%',
-    width: '83%',
-    display: 'flex',
+  itemContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   itemThumbnail: {
-    height: '100%',
-    marginLeft: 8,
-    width: '17%',
-    display: 'flex',
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
   itemDetails: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    height: '100%',
-    width: '83%',
-    overflow: 'hidden',
-  },
-  itemActionButton: {
-    width: '8%',
-    height: '100%',
-  },
-  image: {
-    margin: 1,
-    width: 40,
-    height: 50,
-    resizeMode: 'cover',
-    borderRadius: 5,
-  },
-  fileMenu: {
-    marginRight: 5,
-    height: 60,
-    display: 'flex',
+    flex: 1,
     justifyContent: 'center',
   },
   fileName: {
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: 'Inter_500Medium',
+    marginBottom: 4,
+  },
+  fileMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   fileDetailText: {
-    fontSize: 10,
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+  },
+  itemActionButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  image: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    resizeMode: 'cover',
   },
 });

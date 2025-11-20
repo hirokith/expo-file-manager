@@ -5,16 +5,14 @@ import { StatusBar } from 'expo-status-bar';
 import { Snackbar } from 'react-native-paper';
 import {
   NavigationContainer,
-  DarkTheme,
-  DefaultTheme,
 } from '@react-navigation/native';
 import {
   useFonts,
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-} from '@expo-google-fonts/poppins';
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +25,7 @@ import useLock from '../hooks/useLock';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { setLightTheme, setDarkTheme } from '../features/files/themeSlice';
 import { hideSnack } from '../features/files/snackbarSlice';
+import { DarkTheme, LightTheme } from '../theme';
 
 import LockScreen from '../screens/LockScreen';
 
@@ -77,10 +76,10 @@ export default function Main() {
   }, []);
 
   let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   useEffect(() => {
@@ -91,29 +90,42 @@ export default function Main() {
     return <LockScreen setLocked={setLocked} />;
   }
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  // Ensure we are using the updated theme object from theme.ts, 
+  // but since it's in Redux, we might need to make sure the Redux state is synced or just use the one from props if passed.
+  // However, the Redux state likely stores a plain object or a reference. 
+  // For now, we assume the Redux state structure matches what we expect, 
+  // but we should probably update the initial state in themeSlice if it hardcodes the old theme.
+  // Let's check themeSlice later. For now, we pass the correct theme to NavigationContainer.
+
+  const currentTheme = theme.dark ? DarkTheme : LightTheme;
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: currentTheme.colors.background }}>
       <Snackbar
         visible={isSnackVisible}
-        style={{ backgroundColor: theme.colors.background3 }}
+        style={{ backgroundColor: currentTheme.colors.background3 }}
         theme={{
-          colors: { surface: theme.colors.text },
+          colors: { surface: currentTheme.colors.text },
         }}
         onDismiss={() => dispatch(hideSnack())}
         duration={2000}
         action={
           snackLabel
             ? {
-                label: snackLabel,
-                onPress: () => {},
-              }
+              label: snackLabel,
+              onPress: () => { },
+            }
             : null
         }
       >
         {snackMessage}
       </Snackbar>
-      <StatusBar style={theme.dark ? 'light' : 'dark'} />
-      <NavigationContainer theme={theme.dark ? DarkTheme : DefaultTheme}>
+      <StatusBar style={currentTheme.dark ? 'light' : 'dark'} />
+      <NavigationContainer theme={currentTheme}>
         <MainNavigator />
       </NavigationContainer>
     </View>

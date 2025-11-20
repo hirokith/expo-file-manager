@@ -39,12 +39,12 @@ export const AlbumItem = ({ item: album, setSelectedAlbum }: AlbumProps) => {
       )}
       <View style={styles.albumDetailsContainer}>
         <Text
-          style={{ ...styles.albumTitle, color: colors.primary }}
+          style={{ ...styles.albumTitle, color: colors.text }}
           numberOfLines={1}
         >
           {album.title}
         </Text>
-        <Text style={{ ...styles.albumTitle, color: colors.primary }}>
+        <Text style={{ ...styles.albumTitle, color: colors.textSecondary, fontSize: 11 }}>
           {album.assetCount}
         </Text>
       </View>
@@ -67,8 +67,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   albumTitle: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    textAlign: 'center',
   },
   albumDetailsContainer: {
     position: 'absolute',
