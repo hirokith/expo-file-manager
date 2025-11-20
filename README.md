@@ -60,12 +60,62 @@ Here are some other features:
    ```sh
    yarn install
    ```
-3. Start the app
-  - Run on Android: `yarn android` (or `npm run android`).
+3. Generate native projects (required for iOS)
+   ```sh
+   npx expo prebuild
+   ```
+4. Start the app
+   - Run on Android: `yarn android` (or `npm run android`)
+   - Run on iOS: `yarn ios` (or `npm run ios`)
+   - Run on Web: `yarn web` (or `npm run web`)
 
-  - Run on iOS: `yarn ios` (or `npm run ios`).
-  
-  - Run on Web: `yarn web` (or `npm run web`).
+### Deploy to iOS Device
+
+This app uses native modules (like `expo-share-intent`) that require a Development Build. Follow these steps to deploy to a physical iPhone:
+
+#### Prerequisites
+- macOS with Xcode 16.1+ installed
+- Apple Developer account (free account works)
+- iPhone connected via USB
+
+#### Steps
+
+1. **Install dependencies and generate iOS project**
+   ```sh
+   npm install
+   npx expo prebuild --platform ios
+   ```
+
+2. **Configure code signing in Xcode**
+   ```sh
+   open ios/teyvat.xcworkspace
+   ```
+   - Select the **teyvat** project → **teyvat** target → **Signing & Capabilities**
+   - Enable **Automatically manage signing**
+   - Select your **Team** (Personal Team)
+   - Repeat for **ShareExtension** target
+
+3. **Deploy to device**
+   ```sh
+   npx expo run:ios --device
+   ```
+   Select your iPhone from the device list.
+
+4. **Trust the developer certificate**
+   - On your iPhone: **Settings** → **General** → **VPN & Device Management**
+   - Tap your Apple ID and select **Trust**
+
+5. **Launch the app**
+   - Open the installed app on your iPhone
+   - The Expo Dev Client will load your application
+
+#### Troubleshooting
+
+- **Xcode version error**: Upgrade to Xcode 16.1+ from the App Store
+- **iOS platform not found**: In Xcode → **Settings** → **Platforms**, download iOS 18.5+
+- **Signing errors**: Ensure both `teyvat` and `ShareExtension` targets have the same team selected
+
+For more details, see the [Expo Development Builds documentation](https://docs.expo.dev/develop/development-builds/introduction/).
 
 
 ## Contributing
