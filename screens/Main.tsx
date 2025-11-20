@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Snackbar } from 'react-native-paper';
 import {
   NavigationContainer,
+  createNavigationContainerRef,
 } from '@react-navigation/native';
 import {
   useFonts,
@@ -28,6 +29,9 @@ import { hideSnack } from '../features/files/snackbarSlice';
 import { DarkTheme, LightTheme } from '../theme';
 
 import LockScreen from '../screens/LockScreen';
+import { useIncomingShare } from '../hooks/useIncomingShare';
+
+export const navigationRef = createNavigationContainerRef();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +50,18 @@ export default function Main() {
   } = useAppSelector((state) => state.snackbar);
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
+  const { hasShareIntent, shareIntent, resetShareIntent } = useIncomingShare();
+
+  useEffect(() => {
+    if (hasShareIntent && shareIntent.files && navigationRef.isReady()) {
+      // @ts-ignore
+      navigationRef.navigate('Browser', {
+        saveMode: true,
+        sharedFiles: shareIntent.files,
+      });
+      resetShareIntent();
+    }
+  }, [hasShareIntent, shareIntent, resetShareIntent]);
 
   const getPassCodeStatus = async () => {
     const hasPassCode = await SecureStore.getItemAsync('hasPassCode');
@@ -125,7 +141,7 @@ export default function Main() {
         {snackMessage}
       </Snackbar>
       <StatusBar style={currentTheme.dark ? 'light' : 'dark'} />
-      <NavigationContainer theme={currentTheme}>
+      <NavigationContainer theme={currentTheme} ref={navigationRef}>
         <MainNavigator />
       </NavigationContainer>
     </View>

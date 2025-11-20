@@ -38,7 +38,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as mime from 'react-native-mime-types';
 
-import { StackScreenProps } from '@react-navigation/stack';
+import { StackScreenProps, StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { ExtendedAsset, fileItem } from '../types';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
@@ -47,18 +47,22 @@ import { setSnack, snackActionPayload } from '../features/files/snackbarSlice';
 import { HEIGHT, imageFormats, SIZE } from '../utils/Constants';
 
 type BrowserParamList = {
-  Browser: { prevDir: string; folderName: string };
+  Browser: { prevDir: string; folderName: string; saveMode?: boolean; sharedFiles?: any[] };
 };
 
 type IBrowserProps = StackScreenProps<BrowserParamList, 'Browser'>;
 
 const Browser = ({ route }: IBrowserProps) => {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<BrowserParamList, 'Browser'>>();
   const { colors } = useAppSelector((state) => state.theme.theme);
   const docDir: string = FileSystem.documentDirectory || '';
   const [currentDir, setCurrentDir] = useState<string>(
     route?.params?.prevDir !== undefined ? route?.params?.prevDir : docDir
+  );
+  const [saveMode, setSaveMode] = useState(route?.params?.saveMode || false);
+  const [sharedFilesToSave, setSharedFilesToSave] = useState<any[]>(
+    route?.params?.sharedFiles || []
   );
   const [moveDir, setMoveDir] = useState('');
   const [files, setFiles] = useState<fileItem[]>([]);
@@ -99,6 +103,12 @@ const Browser = ({ route }: IBrowserProps) => {
           ? prev + route.params.folderName
           : prev + '/' + route.params.folderName
       );
+    }
+    if (route?.params?.saveMode !== undefined) {
+      setSaveMode(route.params.saveMode);
+    }
+    if (route?.params?.sharedFiles !== undefined) {
+      setSharedFilesToSave(route.params.sharedFiles);
     }
   }, [route]);
 
@@ -280,14 +290,15 @@ const Browser = ({ route }: IBrowserProps) => {
       copyToCacheDirectory: false,
     });
 
-    if (result.type === 'success') {
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const { name, uri } = result.assets[0];
       const { exists: fileExists } = await FileSystem.getInfoAsync(
-        currentDir + '/' + result.name
+        currentDir + '/' + name
       );
       if (fileExists) {
         Alert.alert(
           'Conflicting File',
-          `The destination folder has a file with the same name ${result.name}`,
+          `The destination folder has a file with the same name ${name}`,
           [
             {
               text: 'Cancel',
@@ -297,9 +308,9 @@ const Browser = ({ route }: IBrowserProps) => {
               text: 'Replace the file',
               onPress: () => {
                 handleCopy(
-                  result.uri,
-                  currentDir + '/' + result.name,
-                  `${result.name} successfully copied.`,
+                  uri,
+                  currentDir + '/' + name,
+                  `${name} successfully copied.`,
                   'An unexpected error importing the file.'
                 );
               },
@@ -309,9 +320,9 @@ const Browser = ({ route }: IBrowserProps) => {
         );
       } else {
         handleCopy(
-          result.uri,
-          currentDir + '/' + result.name,
-          `${result.name} successfully copied.`,
+          uri,
+          currentDir + '/' + name,
+          `${name} successfully copied.`,
           'An unexpected error importing the file.'
         );
       }
@@ -613,6 +624,61 @@ const Browser = ({ route }: IBrowserProps) => {
         </View>
       </View>
 
+
+      {
+        saveMode && (
+          <View style={{ padding: 16, backgroundColor: colors.background2, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <Text style={{ color: colors.text, marginBottom: 8 }}>
+              Saving {sharedFilesToSave.length} file(s) to:
+            </Text>
+            <Text style={{ color: colors.primary, fontWeight: 'bold', marginBottom: 16 }}>
+              {currentDir.split('/').pop() || 'Documents'}
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                style={{ padding: 10, backgroundColor: colors.error, borderRadius: 8, flex: 1, marginRight: 8, alignItems: 'center' }}
+                onPress={() => {
+                  setSaveMode(false);
+                  setSharedFilesToSave([]);
+                  navigation.setParams({ saveMode: false, sharedFiles: [] });
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ padding: 10, backgroundColor: colors.primary, borderRadius: 8, flex: 1, marginLeft: 8, alignItems: 'center' }}
+                onPress={async () => {
+                  const promises = sharedFilesToSave.map(async (file) => {
+                    const fileName = file.fileName || file.path.split('/').pop();
+                    const destination = currentDir + '/' + fileName;
+                    try {
+                      await FileSystem.copyAsync({
+                        from: file.path,
+                        to: destination,
+                      });
+                    } catch (e) {
+                      console.error('Error saving file:', e);
+                      handleSetSnack({ message: `Error saving ${fileName}` });
+                    }
+                  });
+
+                  setImportProgressVisible(true);
+                  await Promise.all(promises);
+                  setImportProgressVisible(false);
+                  handleSetSnack({ message: 'Files saved successfully' });
+                  setSaveMode(false);
+                  setSharedFilesToSave([]);
+                  navigation.setParams({ saveMode: false, sharedFiles: [] });
+                  getFiles();
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Save Here</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )
+      }
+
       <View style={styles.fileList}>
         <FlatList
           data={files}
@@ -622,7 +688,7 @@ const Browser = ({ route }: IBrowserProps) => {
           contentContainerStyle={{ paddingBottom: 100 }}
         />
       </View>
-    </View>
+    </View >
   );
 };
 
