@@ -1,8 +1,8 @@
 {
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "eject": "expo eject",
     "postinstall": "patch-package"
@@ -22,6 +22,7 @@
     "expo-av": "~16.0.7",
     "expo-camera": "~17.0.9",
     "expo-constants": "~18.0.10",
+    "expo-dev-client": "~6.0.18",
     "expo-document-picker": "~14.0.7",
     "expo-file-system": "~19.0.19",
     "expo-image-picker": "~17.0.8",
@@ -61,7 +62,7 @@
     "typescript": "^5.9.2"
   },
   "private": false,
-  "name": "expo-file-manager",
+  "name": "teyvat",
   "version": "1.0.0",
   "packageManager": "yarn@1.22.21"
 }

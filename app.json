@@ -1,10 +1,11 @@
 {
   "expo": {
-    "name": "expo-file-manager",
-    "slug": "expo-file-manager",
+    "name": "teyvat",
+    "slug": "teyvat",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "scheme": "teyvat",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -19,14 +20,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "usesIcloudStorage": true
+      "bundleIdentifier": "com.expo.teyvat"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFF"
       },
-      "package": "com.martymfly.expofilemanager"
+      "package": "com.expo.teyvat"
     },
     "web": {
       "favicon": "./assets/favicon.png"
